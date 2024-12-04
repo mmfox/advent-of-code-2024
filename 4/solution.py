@@ -11,8 +11,11 @@ def get_data_values() -> Generator[list[str], None, None]:
             yield line
 
 
-def check_mas(chars: list[str]) -> bool:
-    return "".join(chars) == "MAS"
+def check_mas(chars: list[str], reverse_allowed=False) -> bool:
+    allowed = {"MAS"}
+    if reverse_allowed:
+        allowed.add("SAM")
+    return "".join(chars) in allowed
 
 
 def part1() -> int:
@@ -20,67 +23,30 @@ def part1() -> int:
     for line in get_data_values():
         data.append(line.strip())
 
+    allowed_directions = []
+    for row_delta in range(-1, 2):
+        for col_delta in range(-1, 2):
+            if row_delta == 0 and col_delta == 0:
+                continue
+            allowed_directions.append((row_delta, col_delta))
+
     count = 0
     for row in range(len(data)):
         for col in range(len(data[row])):
             char = data[row][col]
             if char == "X":
-                if row > 2:
-                    if check_mas(
-                        [data[row - 1][col], data[row - 2][col], data[row - 3][col]]
-                    ):
-                        count += 1
-                if col > 2:
-                    if check_mas(
-                        [data[row][col - 1], data[row][col - 2], data[row][col - 3]]
-                    ):
-                        count += 1
-                if col < len(data[row]) - 3:
-                    if check_mas(
-                        [data[row][col + 1], data[row][col + 2], data[row][col + 3]]
-                    ):
-                        count += 1
-                if row > 2 and col > 2:
-                    if check_mas(
-                        [
-                            data[row - 1][col - 1],
-                            data[row - 2][col - 2],
-                            data[row - 3][col - 3],
-                        ]
-                    ):
-                        count += 1
-                if row > 2 and col < len(data[row]) - 3:
-                    if check_mas(
-                        [
-                            data[row - 1][col + 1],
-                            data[row - 2][col + 2],
-                            data[row - 3][col + 3],
-                        ]
-                    ):
-                        count += 1
-                if row < len(data) - 3:
-                    if check_mas(
-                        [data[row + 1][col], data[row + 2][col], data[row + 3][col]]
-                    ):
-                        count += 1
-                if row < len(data) - 3 and col > 2:
-                    if check_mas(
-                        [
-                            data[row + 1][col - 1],
-                            data[row + 2][col - 2],
-                            data[row + 3][col - 3],
-                        ]
-                    ):
-                        count += 1
-                if row < len(data) - 3 and col < len(data[row]) - 3:
-                    if check_mas(
-                        [
-                            data[row + 1][col + 1],
-                            data[row + 2][col + 2],
-                            data[row + 3][col + 3],
-                        ]
-                    ):
-                        count += 1
+                for row_delta, col_delta in allowed_directions:
+                    if 0 <= row + 3 * row_delta < len(
+                        data
+                    ) and 0 <= col + 3 * col_delta < len(data[row]):
+                        if check_mas(
+                            [
+                                data[row + row_delta][col + col_delta],
+                                data[row + 2 * row_delta][col + 2 * col_delta],
+                                data[row + 3 * row_delta][col + 3 * col_delta],
+                            ]
+                        ):
+                            count += 1
 
     return count
 
@@ -95,21 +61,12 @@ def part2() -> int:
         for col in range(1, len(data[row]) - 1):
             char = data[row][col]
             if char == "A":
-                # Check for A being the center of MAS in an X pattern
-                if (
-                    check_mas(
-                        [data[row - 1][col - 1], data[row][col], data[row + 1][col + 1]]
-                    )
-                    or check_mas(
-                        [data[row + 1][col + 1], data[row][col], data[row - 1][col - 1]]
-                    )
-                ) and (
-                    check_mas(
-                        [data[row - 1][col + 1], data[row][col], data[row + 1][col - 1]]
-                    )
-                    or check_mas(
-                        [data[row + 1][col - 1], data[row][col], data[row - 1][col + 1]]
-                    )
+                if check_mas(
+                    [data[row - 1][col - 1], data[row][col], data[row + 1][col + 1]],
+                    reverse_allowed=True,
+                ) and check_mas(
+                    [data[row - 1][col + 1], data[row][col], data[row + 1][col - 1]],
+                    reverse_allowed=True,
                 ):
                     count += 1
 
